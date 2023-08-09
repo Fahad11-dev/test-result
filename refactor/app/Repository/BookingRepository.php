@@ -92,11 +92,12 @@ class BookingRepository extends BaseRepository
     public function getUsersJobsHistory($user_id, Request $request)
     {
         $page = $request->get('page');
-        if (isset($page)) {
-            $pagenum = $page;
-        } else {
-            $pagenum = "1";
-        }
+        $pagenum = (isset($page) ? $page : 1);
+        // if (isset($page)) {
+        //     $pagenum = $page;
+        // } else {
+        //     $pagenum = "1";
+        // }
         $cuser = User::find($user_id);
         $usertype = '';
         $emergencyJobs = array();
@@ -172,11 +173,12 @@ class BookingRepository extends BaseRepository
                     return $response;
                 }
             }
-            if (isset($data['customer_phone_type'])) {
-                $data['customer_phone_type'] = 'yes';
-            } else {
-                $data['customer_phone_type'] = 'no';
-            }
+            $data['customer_phone_type'] = (isset($data['customer_phone_type']) ? 'yes' : 'no');
+            // if () {
+            //     $data['customer_phone_type'] = 'yes';
+            // } else {
+            //     $data['customer_phone_type'] = 'no';
+            // }
 
             if (isset($data['customer_physical_type'])) {
                 $data['customer_physical_type'] = 'yes';
@@ -286,6 +288,7 @@ class BookingRepository extends BaseRepository
     public function storeJobEmail($data)
     {
         $user_type = $data['user_type'];
+        /* do not use find or fail with useless models it can give you error when this job dont have any record findOrFail  */ 
         $job = Job::findOrFail(@$data['user_email_job_id']);
         $job->user_email = @$data['user_email'];
         $job->reference = isset($data['reference']) ? $data['reference'] : '';
@@ -484,6 +487,7 @@ class BookingRepository extends BaseRepository
         $delpay_translator_array = array();     // suitable translators (need to delay push)
 
         foreach ($users as $oneUser) {
+            /* Useless condition you dont have convert numbers in string this operator will check value not datatype */
             if ($oneUser->user_type == '2' && $oneUser->status == '1' && $oneUser->id != $exclude_user_id) { // user is translator and he is not disabled
                 if (!$this->isNeedToSendPush($oneUser->id)) continue;
                 $not_get_emergency = TeHelper::getUsermeta($oneUser->id, 'not_get_emergency');
@@ -610,9 +614,7 @@ class BookingRepository extends BaseRepository
      */
     public function sendPushNotificationToSpecificUsers($users, $job_id, $data, $msg_text, $is_need_delay)
     {
-
         $logger = new Logger('push_logger');
-
         $logger->pushHandler(new StreamHandler(storage_path('logs/push/laravel-' . date('Y-m-d') . '.log'), Logger::DEBUG));
         $logger->pushHandler(new FirePHPHandler());
         $logger->addInfo('Push send for job ' . $job_id, [$users, $data, $msg_text, $is_need_delay]);
